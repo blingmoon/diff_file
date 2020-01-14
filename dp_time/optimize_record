@@ -1,0 +1,17 @@
+m = before_file_length
+n = after_file_length
+
+
+第一次dp  时间复杂度: m*n   空间复杂度 m*n
+测试: 548*612 共计耗时 308s   linux diff 命令耗时:0.0109958648682
+
+第一次优化:
+原因: deepcopy 太多, 深拷贝太多path导致耗时, 将deepcopy 换为 [:]  耗时为: 24 s
+
+第二次优化:
+原因,再path计算路径长度,是通过遍历path_list重复计算导致时间复杂度变为了 m*n*m*n 数量级, 将长度直接传入 ,耗时: 9.15
+
+
+
+
+

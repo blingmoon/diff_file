@@ -1,0 +1,286 @@
+<span># -*- coding:utf-8 -*-</span><br/>
+<span># @Time     : 2020/1/13 11:46</span><br/>
+<span># @Author   : zhouliang02</span><br/>
+<span># @description  :</span><br/>
+<span>import copy</span><br/>
+<span>import os</span><br/>
+<span>import time</span><br/>
+<span></span><br/>
+<span>left, down, stay = (0, 1), (1, 0), (1, 1)</span><br/>
+<span></span><br/>
+<span></span><br/>
+<span>class Path(object):</span><br/>
+<span style="background:red;">-     def __init__(self, end, path):</span><br/>
+<span style="background:green;">+     def __init__(self, end, path, count):</span><br/>
+<span>        self.end = end</span><br/>
+<span>        self.path = path</span><br/>
+<span>        # print path</span><br/>
+<span style="background:red;">-         self.count = 0</span><br/>
+<span style="background:green;">+         self.count = count</span><br/>
+<span style="background:green;">+         # self._get_count()</span><br/>
+<span style="background:green;">+ </span><br/>
+<span style="background:green;">+     def _get_count(self):</span><br/>
+<span>        for item in self.path:</span><br/>
+<span>            if item != stay:</span><br/>
+<span>                self.count += 1</span><br/>
+<span></span><br/>
+<span style="background:red;">-     def create_new_path(self, end, new_p):</span><br/>
+<span style="background:red;">-         c = copy.deepcopy(self.path)</span><br/>
+<span style="background:green;">+     def create_new_path(self, end, new_p, count):</span><br/>
+<span style="background:green;">+         c = self.path[:]  # copy.deepcopy(self.path)</span><br/>
+<span>        c.append(new_p)</span><br/>
+<span style="background:red;">- </span><br/>
+<span>        # print copy.deepcopy(self.path).append(new_p)</span><br/>
+<span style="background:red;">-         return Path(end, c)</span><br/>
+<span style="background:green;">+         return Path(end, c, count)</span><br/>
+<span></span><br/>
+<span>    def print_path(self):</span><br/>
+<span>        str_map = {left: "+", down: "-", stay: "stay"}</span><br/>
+<span>        for item in self.path:</span><br/>
+<span>            print(str_map[item])</span><br/>
+<span></span><br/>
+<span></span><br/>
+<span>class TextType(object):</span><br/>
+<span>    def __init__(self):</span><br/>
+<span>        pass</span><br/>
+<span></span><br/>
+<span>    def transform_add(self, line):</span><br/>
+<span>        return "{}{}".format(line, os.linesep)</span><br/>
+<span></span><br/>
+<span>    def transform_delete(self, line):</span><br/>
+<span>        return "{}{}".format(line, os.linesep)</span><br/>
+<span></span><br/>
+<span>    def no_change(self, line):</span><br/>
+<span>        return "{}{}".format(line, os.linesep)</span><br/>
+<span></span><br/>
+<span></span><br/>
+<span>class HTMLTextType(TextType):</span><br/>
+<span>    def __init__(self):</span><br/>
+<span>        super(HTMLTextType, self).__init__()</span><br/>
+<span></span><br/>
+<span>    def transform_add(self, line):</span><br/>
+<span>        return "<span style=\"background:green;\">{}</span><br/>{}".format(line, os.linesep)</span><br/>
+<span></span><br/>
+<span>    def transform_delete(self, line):</span><br/>
+<span>        return "<span style=\"background:red;\">{}</span><br/>{}".format(line, os.linesep)</span><br/>
+<span></span><br/>
+<span>    def no_change(self, line):</span><br/>
+<span>        return "<span>{}</span><br/>{}".format(line, os.linesep)</span><br/>
+<span style="background:green;">+ </span><br/>
+<span style="background:green;">+ </span><br/>
+<span style="background:green;">+ class TerminalTextType(TextType):</span><br/>
+<span style="background:green;">+     def __init__(self):</span><br/>
+<span style="background:green;">+         super(TerminalTextType, self).__init__()</span><br/>
+<span style="background:green;">+ </span><br/>
+<span style="background:green;">+     def transform_add(self, line):</span><br/>
+<span style="background:green;">+         return "\033[0;32;m{}\033[0m{}".format(line, os.linesep)</span><br/>
+<span style="background:green;">+ </span><br/>
+<span style="background:green;">+     def transform_delete(self, line):</span><br/>
+<span style="background:green;">+         return "\033[0;31;m{}\033[0m{}".format(line, os.linesep)</span><br/>
+<span style="background:green;">+ </span><br/>
+<span style="background:green;">+     def no_change(self, line):</span><br/>
+<span style="background:green;">+         return "{}{}".format(line, os.linesep)</span><br/>
+<span></span><br/>
+<span></span><br/>
+<span>class Diff(object):</span><br/>
+<span>    left, down, stay = (0, 1), (1, 0), (1, 1)</span><br/>
+<span></span><br/>
+<span>    def __init__(self):</span><br/>
+<span>        self.pre_file_path = None</span><br/>
+<span>        self.after_file_path = None</span><br/>
+<span>        self.pre_str_list = None</span><br/>
+<span>        self.after_str_list = None</span><br/>
+<span>        self.change_path = None</span><br/>
+<span></span><br/>
+<span>    def _init_dp(self):</span><br/>
+<span>        dp = [[len(self.pre_str_list) + len(self.after_str_list) + 1] * (len(self.after_str_list) + 1) for i in</span><br/>
+<span>              range(len(self.pre_str_list) + 1)]</span><br/>
+<span>        dp[0][0] = 0</span><br/>
+<span style="background:red;">-         path_dp = {(0, 0): Path((0, 0), [])}</span><br/>
+<span style="background:green;">+         path_dp = {(0, 0): Path((0, 0), [], 0)}</span><br/>
+<span>        for i in range(1, len(self.after_str_list) + 1):</span><br/>
+<span>            dp[0][i] = dp[0][i - 1] + 1</span><br/>
+<span style="background:red;">-             path_dp[(0, i)] = path_dp.get((0, i - 1)).create_new_path((0, i), left)</span><br/>
+<span style="background:green;">+             path_dp[(0, i)] = path_dp.get((0, i - 1)).create_new_path((0, i), left, dp[0][i])</span><br/>
+<span>        for i in range(1, len(self.pre_str_list) + 1):</span><br/>
+<span>            dp[i][0] = dp[i - 1][0] + 1</span><br/>
+<span style="background:red;">-             path_dp[(i, 0)] = path_dp.get((i - 1, 0)).create_new_path((i, 0), down)</span><br/>
+<span style="background:green;">+             path_dp[(i, 0)] = path_dp.get((i - 1, 0)).create_new_path((i, 0), down, dp[0][i])</span><br/>
+<span></span><br/>
+<span>        return dp, path_dp</span><br/>
+<span></span><br/>
+<span>    def _find_min_path(self, dp, path_dp):</span><br/>
+<span>        times = 0</span><br/>
+<span>        all_time = 0</span><br/>
+<span></span><br/>
+<span>        # dp 开始</span><br/>
+<span>        for i in range(1, len(dp)):</span><br/>
+<span>            for j in range(1, len(dp[i])):</span><br/>
+<span></span><br/>
+<span>                times += 1</span><br/>
+<span>                # print "begin {}".format((i, j))</span><br/>
+<span>                # default stay</span><br/>
+<span>                begin_time = time.time()</span><br/>
+<span>                if self.pre_str_list[i - 1] == self.after_str_list[j - 1]:</span><br/>
+<span>                    dp[i][j] = dp[i - 1][j - 1]</span><br/>
+<span>                if dp[i - 1][j] < dp[i][j - 1]:</span><br/>
+<span>                    # down  pk stay</span><br/>
+<span>                    if dp[i - 1][j] + 1 < dp[i][j]:</span><br/>
+<span>                        # down</span><br/>
+<span style="background:red;">-                         path_dp[(i, j)] = path_dp[(i - 1, j)].create_new_path((i, j), down)</span><br/>
+<span>                        dp[i][j] = dp[i - 1][j] + 1</span><br/>
+<span style="background:green;">+                         path_dp[(i, j)] = path_dp[(i - 1, j)].create_new_path((i, j), down, dp[i][j])</span><br/>
+<span>                    else:</span><br/>
+<span>                        # stay</span><br/>
+<span style="background:red;">-                         path_dp[(i, j)] = path_dp[(i - 1, j - 1)].create_new_path((i, j), stay)</span><br/>
+<span style="background:green;">+                         path_dp[(i, j)] = path_dp[(i - 1, j - 1)].create_new_path((i, j), stay, dp[i][j])</span><br/>
+<span>                else:</span><br/>
+<span>                    # left pk stay</span><br/>
+<span>                    if dp[i][j - 1] + 1 < dp[i][j]:</span><br/>
+<span>                        # left</span><br/>
+<span style="background:red;">-                         path_dp[(i, j)] = path_dp[(i, j - 1)].create_new_path((i, j), left)</span><br/>
+<span>                        dp[i][j] = dp[i][j - 1] + 1</span><br/>
+<span style="background:green;">+                         path_dp[(i, j)] = path_dp[(i, j - 1)].create_new_path((i, j), left, dp[i][j])</span><br/>
+<span>                    else:</span><br/>
+<span>                        # stay</span><br/>
+<span style="background:red;">-                         path_dp[(i, j)] = path_dp[(i - 1, j - 1)].create_new_path((i, j), stay)</span><br/>
+<span style="background:green;">+                         path_dp[(i, j)] = path_dp[(i - 1, j - 1)].create_new_path((i, j), stay, dp[i][j])</span><br/>
+<span>                all_time += time.time() - begin_time</span><br/>
+<span>        print("dp is close {}".format(all_time))</span><br/>
+<span>        print("avg time is {}".format(all_time/times))</span><br/>
+<span></span><br/>
+<span>        return path_dp[(len(dp) - 1, len(dp[0]) - 1)]</span><br/>
+<span></span><br/>
+<span>    def _find_min_path_version1(self):</span><br/>
+<span>        # 优化空间复杂度</span><br/>
+<span></span><br/>
+<span>        pass</span><br/>
+<span></span><br/>
+<span>    def compare_file(self, pre_file_path, after_file_path):</span><br/>
+<span>        if not os.path.exists(pre_file_path) or not os.path.exists(pre_file_path):</span><br/>
+<span>            return False</span><br/>
+<span>        self.after_file_path = after_file_path</span><br/>
+<span>        self.pre_file_path = pre_file_path</span><br/>
+<span>        with open(self.pre_file_path, "rU") as pre_file:</span><br/>
+<span>            self.pre_str_list = pre_file.read().split("\n")</span><br/>
+<span>        with open(self.after_file_path, "rU") as after_file:</span><br/>
+<span>            self.after_str_list = after_file.read().split("\n")</span><br/>
+<span></span><br/>
+<span>        dp, path_dp = self._init_dp()</span><br/>
+<span>        self.change_path = self._find_min_path(dp, path_dp)</span><br/>
+<span>        return True</span><br/>
+<span></span><br/>
+<span>    def out_change_file(self, out_file, txt_type=TextType()):</span><br/>
+<span>        pre_index = after_index = 0</span><br/>
+<span>        str_text = ""</span><br/>
+<span>        for d in self.change_path.path:</span><br/>
+<span>            if d == left:</span><br/>
+<span>                str_text += txt_type.transform_add("+ {}".format(self.after_str_list[after_index]))</span><br/>
+<span>                after_index += 1</span><br/>
+<span>            elif d == down:</span><br/>
+<span>                str_text += txt_type.transform_delete("- {}".format(self.pre_str_list[pre_index]))</span><br/>
+<span>                pre_index += 1</span><br/>
+<span>            else:</span><br/>
+<span>                str_text += txt_type.no_change(</span><br/>
+<span>                    "{}".format(self.after_str_list[after_index], self.pre_str_list[pre_index]))</span><br/>
+<span>                after_index += 1</span><br/>
+<span>                pre_index += 1</span><br/>
+<span>        with open(out_file, "w") as op_file:</span><br/>
+<span>            op_file.write(str_text)</span><br/>
+<span></span><br/>
+<span>    def get_step_count(self):</span><br/>
+<span>        return self.change_path.count</span><br/>
+<span></span><br/>
+<span></span><br/>
+<span>if __name__ == "__main__":</span><br/>
+<span>    # pre_file_path = "ABCD.txt"</span><br/>
+<span>    # after_file_path = "after_file.txt"</span><br/>
+<span>    diff = Diff()</span><br/>
+<span>    start_time = time.time()</span><br/>
+<span>    diff.compare_file("test_before", "test_after")</span><br/>
+<span>    diff.out_change_file("after_file.txt", HTMLTextType())</span><br/>
+<span>    after_time = time.time()</span><br/>
+<span>    print("time is {}".format(after_time-start_time))</span><br/>
+<span>    print("change count is {}".format(diff.get_step_count()))</span><br/>
+<span>    # with open(pre_file_path, "rU") as pre_file:</span><br/>
+<span>    #     pre_str = pre_file.read()</span><br/>
+<span>    #     pre_str_list = pre_str.split("\n")</span><br/>
+<span>    #     # print(pre_str)</span><br/>
+<span>    # with open(after_file_path, "rU") as after_file:</span><br/>
+<span>    #     after_str = after_file.read()</span><br/>
+<span>    #     after_str_list = after_str.split("\n")</span><br/>
+<span>    #     # print(after_str)</span><br/>
+<span>    # # print pre_str_list</span><br/>
+<span>    # # print after_str_list</span><br/>
+<span>    # dp = [[len(pre_str_list) + len(after_str_list) + 1] * (len(after_str_list) + 1) for i in</span><br/>
+<span>    #       range(len(pre_str_list) + 1)]</span><br/>
+<span>    # # init dp</span><br/>
+<span>    # dp[0][0] = 0</span><br/>
+<span>    # path_dp = {(0, 0): Path((0, 0), [])}</span><br/>
+<span>    # for i in range(1, len(after_str_list) + 1):</span><br/>
+<span>    #     dp[0][i] = dp[0][i - 1] + 1</span><br/>
+<span>    #     path_dp[(0, i)] = path_dp.get((0, i - 1)).create_new_path((0, i), left)</span><br/>
+<span>    #</span><br/>
+<span>    # for i in range(1, len(pre_str_list) + 1):</span><br/>
+<span>    #     dp[i][0] = dp[i - 1][0] + 1</span><br/>
+<span>    #     path_dp[(i, 0)] = path_dp.get((i - 1, 0)).create_new_path((i, 0), down)</span><br/>
+<span>    #</span><br/>
+<span>    # # for i in range(len(dp)):</span><br/>
+<span>    # #     print dp[i]</span><br/>
+<span>    #</span><br/>
+<span>    # # dp 开始</span><br/>
+<span>    # for i in range(1, len(dp)):</span><br/>
+<span>    #     for j in range(1, len(dp[i])):</span><br/>
+<span>    #         print "begin {}".format((i, j))</span><br/>
+<span>    #         # default stay</span><br/>
+<span>    #         if pre_str_list[i - 1] == after_str_list[j - 1]:</span><br/>
+<span>    #             dp[i][j] = dp[i - 1][j - 1]</span><br/>
+<span>    #         if dp[i - 1][j] < dp[i][j - 1]:</span><br/>
+<span>    #             # down  pk stay</span><br/>
+<span>    #             if dp[i - 1][j] + 1 < dp[i][j]:</span><br/>
+<span>    #                 # down</span><br/>
+<span>    #                 path_dp[(i, j)] = path_dp[(i - 1, j)].create_new_path((i, j), down)</span><br/>
+<span>    #                 dp[i][j] = dp[i - 1][j] + 1</span><br/>
+<span>    #             else:</span><br/>
+<span>    #                 # stay</span><br/>
+<span>    #                 path_dp[(i, j)] = path_dp[(i - 1, j - 1)].create_new_path((i, j), stay)</span><br/>
+<span>    #</span><br/>
+<span>    #         else:</span><br/>
+<span>    #             # left pk stay</span><br/>
+<span>    #             if dp[i][j - 1] + 1 < dp[i][j]:</span><br/>
+<span>    #                 # left</span><br/>
+<span>    #                 path_dp[(i, j)] = path_dp[(i, j - 1)].create_new_path((i, j), left)</span><br/>
+<span>    #                 dp[i][j] = dp[i][j - 1] + 1</span><br/>
+<span>    #             else:</span><br/>
+<span>    #                 # stay</span><br/>
+<span>    #                 path_dp[(i, j)] = path_dp[(i - 1, j - 1)].create_new_path((i, j), stay)</span><br/>
+<span>    # # print "############################"</span><br/>
+<span>    # # for i in range(len(dp)):</span><br/>
+<span>    # #     print dp[i]</span><br/>
+<span>    # print "############################"</span><br/>
+<span>    # path_dp[(len(dp) - 1, len(dp[0]) - 1)].print_path()</span><br/>
+<span>    # op_path = path_dp[(len(dp) - 1, len(dp[0]) - 1)]</span><br/>
+<span>    #</span><br/>
+<span>    # pre_index = after_index = 0</span><br/>
+<span>    # str_text = ""</span><br/>
+<span>    # operator_text = ""</span><br/>
+<span>    # for d in op_path.path:</span><br/>
+<span>    #     if d == left:</span><br/>
+<span>    #         str_text += "+ {} \n".format(after_str_list[after_index])</span><br/>
+<span>    #         operator_text += after_str_list[after_index] + "\n"</span><br/>
+<span>    #         after_index += 1</span><br/>
+<span>    #     elif d == down:</span><br/>
+<span>    #         str_text += ("- {} \n".format(pre_str_list[pre_index]))</span><br/>
+<span>    #         pre_index += 1</span><br/>
+<span>    #     else:</span><br/>
+<span>    #         str_text += "s {} +++++++ {} \n".format(after_str_list[after_index], pre_str_list[pre_index])</span><br/>
+<span>    #         operator_text += after_str_list[after_index] + "\n"</span><br/>
+<span>    #         after_index += 1</span><br/>
+<span>    #         pre_index += 1</span><br/>
+<span>    # print("count is {}".format(op_path.count))</span><br/>
+<span>    # with open("opertor.txt", "w") as op_file:</span><br/>
+<span>    #     op_file.write(str_text)</span><br/>
+<span>    #</span><br/>
+<span>    # with open("after_file.txt", "w") as after_file:</span><br/>
+<span>    #     after_file.write(operator_text)</span><br/>
+<span></span><br/>
